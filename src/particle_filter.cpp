@@ -215,7 +215,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	      // calculate weight for this observation with multivariate Gaussian
 	      double s_x = std_landmark[0];
 	      double s_y = std_landmark[1];
-	      double obs_w = ( 1/(2*M_PI*s_x*s_y)) * exp( -( pow(pr_x-o_x,2)/(2*pow(s_x, 2)) + (pow(pr_y-o_y,2)/(2*pow(s_y, 2))) ) );
+	      double obs_w = (1/(2*M_PI*s_x*s_y)) * exp( -( pow(pr_x-o_x,2)/(2*pow(s_x, 2)) + (pow(pr_y-o_y,2)/(2*pow(s_y, 2))) ) );
 
 	      // product of this obersvation weight with total observations weight
 	      particles[i].weight *= obs_w;
@@ -228,7 +228,23 @@ void ParticleFilter::resample() {
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
-	
+	vector<Particle> resampled_particles;
+
+  // get all of the current weights
+  vector<double> weights;
+  for (int i = 0; i < num_particles; ++i) {
+    weights.push_back(particles[i].weight);
+  }
+
+	std::random_device rd;
+  std::mt19937 gen(rd());
+  std::discrete_distribution<> d(weights.begin(), weights.end());
+
+  for(int i = 0; i < num_particles; ++i) {
+      resampled_particles.push_back(particles[d(gen)]);
+  }
+
+	particles = resampled_particles;
 
 }
 
