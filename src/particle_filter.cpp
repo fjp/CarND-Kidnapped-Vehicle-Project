@@ -61,11 +61,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 				p.theta = sample_theta;
 				p.weight = 1.0;
 
-				//weights.push_back(1);
 				particles.push_back(p);
-
-		// Print your samples to the terminal.
-		//cout << "Sample " << i + 1 << " " << sample_x << " " << sample_y << " " << sample_theta << endl;
 	}
 
 	is_initialized = true;
@@ -115,8 +111,8 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to
 	//   implement this method and use it as a helper during the updateWeights phase.
 
-
-    double min_dist = numeric_limits<double>::max();
+	double x_obs, y_obs, x_pred, y_pred;
+  double min_dist = numeric_limits<double>::max();
 
 	for (int o = 0; o < observations.size(); ++o) {
 		// grab current observation
@@ -158,19 +154,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	// foreach particle ...
 	for (int i = 0; i < num_particles; ++i) {
 		// get its x and y map coordinates
-		p_x = particles[i].x;
-		p_y = particles[i].y;
-		p_theta = particles[i].theta;
+		double p_x = particles[i].x;
+		double p_y = particles[i].y;
+		double p_theta = particles[i].theta;
 
 		// create a vector to hold the map landmark locations predicted to be within sensor range of the particle
     std::vector<LandmarkObs> predictions;
 
     // for each map landmark...
-    for (int l = 0; j < map_landmarks.landmark_list.size(); l++) {
+    for (int l = 0; l < map_landmarks.landmark_list.size(); l++) {
 			// get id and x,y coordinates
-			lm_x = map_landmarks.landmark_list[l].x;
-			lm_y = map_landmarks.landmark_list[l].y;
-			lm_id = map_landmarks.landmark_list[l].id;
+			int lm_id = map_landmarks.landmark_list[l].id_i;
+			float lm_x = map_landmarks.landmark_list[l].x_f;
+			float lm_y = map_landmarks.landmark_list[l].y_f;
 
 			 // only consider landmarks within sensor range of the particle
 			if (dist(p_x, p_y, lm_x, lm_y) < sensor_range) {
@@ -236,14 +232,22 @@ void ParticleFilter::resample() {
     weights.push_back(particles[i].weight);
   }
 
+	// taken from the example above
 	std::random_device rd;
   std::mt19937 gen(rd());
+	// produces random integers on the interval [0, n),
+	// where the probability of each individual integer i is defined as wi/S,
+	// that is the weight of the ith integer divided by the sum of all n weights.
+	// therefore this function normalizes the weights.
   std::discrete_distribution<> d(weights.begin(), weights.end());
 
+	// resample from the particles using the discrete distribution by considering
+	// the particle's weights.
   for(int i = 0; i < num_particles; ++i) {
       resampled_particles.push_back(particles[d(gen)]);
   }
 
+	// update the particles with the more likely resample particles
 	particles = resampled_particles;
 
 }
